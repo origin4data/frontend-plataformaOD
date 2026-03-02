@@ -6,8 +6,6 @@ import Image from 'next/image'
 import { Mail, Lock, Loader2, ShieldCheck, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
-import logoOD from '@/assets/logo-OD.png'
-
 export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
@@ -16,10 +14,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  // Controle da Splash Screen inicial
   const [isLoaded, setIsLoaded] = useState(false)
   
-  // Controle da tela de Sucesso (Entrando no sistema)
   const [loginSuccess, setLoginSuccess] = useState(false)
 
   useEffect(() => {
@@ -51,6 +47,7 @@ export default function LoginPage() {
 
   return (
     <>
+      {/* 1. TELA DE CARREGAMENTO */}
       <div 
         className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-black transition-all duration-700 ease-in-out ${
           isLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'
@@ -60,8 +57,10 @@ export default function LoginPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-500/20 blur-2xl rounded-full" />
           
           <Image 
-            src={logoOD} 
+            src="/logood.png" 
             alt="Origin Data" 
+            width={80}
+            height={80}
             className="w-20 h-20 object-contain mb-6 animate-pulse relative z-10"
             priority
           />
@@ -72,6 +71,7 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* 2. TELA DE SUCESSO */}
       <div 
         className={`fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black transition-opacity duration-500 ease-in-out ${
           loginSuccess ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -81,8 +81,10 @@ export default function LoginPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-green-500/10 blur-[60px] rounded-full" />
           
           <Image 
-            src={logoOD} 
+            src="/logood.png" 
             alt="Origin Data" 
+            width={96}
+            height={96}
             className="w-24 h-24 object-contain mb-8 animate-pulse relative z-10"
           />
           
@@ -99,13 +101,16 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* 3. CONTEÚDO PRINCIPAL */}
       <div className="min-h-screen w-full flex bg-black">
         
         <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 z-10 relative bg-black overflow-hidden">
+          
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px]" />
           <div className="absolute -top-32 -left-32 w-96 h-96 bg-orange-600/10 rounded-full blur-[100px] pointer-events-none" />
 
           <div className="w-full max-w-[540px] relative z-10 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col backdrop-blur-xl">
+            
             <div className="h-14 bg-zinc-900 border-b border-zinc-800 flex items-center px-5 justify-between select-none">
               <div className="flex gap-2">
                 <div className="w-3.5 h-3.5 rounded-full bg-red-500/80 border border-red-500/50" />
@@ -125,12 +130,14 @@ export default function LoginPage() {
               
               <div className="mb-10 text-center flex flex-col items-center">
                 <Image 
-                  src={logoOD} 
+                  src="/logood.png" 
                   alt="Origin Data Logo" 
+                  width={64}
+                  height={64}
                   className="w-16 h-16 object-contain mb-6"
                 />
                 <h1 className="text-3xl font-semibold text-white mb-3 tracking-tight">
-                  ORIGIN DATA
+                  Acesso Restrito
                 </h1>
                 <p className="text-zinc-400 text-sm lg:text-base leading-relaxed max-w-sm">
                   Autentique-se com suas credenciais para acessar o painel de controle.
