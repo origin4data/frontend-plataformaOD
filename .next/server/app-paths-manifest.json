@@ -1,11 +1,13 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
   "/(auth)/onboarding/page": "app/(auth)/onboarding/page.js",
   "/page": "app/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/(dashboard)/processos/page": "app/(dashboard)/processos/page.js",
-  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
-  "/(dashboard)/crm/page": "app/(dashboard)/crm/page.js",
-  "/(dashboard)/lojas/page": "app/(dashboard)/lojas/page.js",
   "/(dashboard)/clientes/page": "app/(dashboard)/clientes/page.js",
-  "/(dashboard)/configuracoes/page": "app/(dashboard)/configuracoes/page.js"
+  "/(dashboard)/configuracoes/page": "app/(dashboard)/configuracoes/page.js",
+  "/(dashboard)/crm/lead/[id]/page": "app/(dashboard)/crm/lead/[id]/page.js",
+  "/(dashboard)/crm/page": "app/(dashboard)/crm/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/processos/page": "app/(dashboard)/processos/page.js",
+  "/(dashboard)/lojas/page": "app/(dashboard)/lojas/page.js"
 }

@@ -1,3 +1,5 @@
+// src/types/api.ts
+
 // ==================== AUTENTICAÇÃO ====================
 export interface LoginRequestDTO {
   email: string;
@@ -5,7 +7,7 @@ export interface LoginRequestDTO {
 }
 
 export interface LoginResponseDTO {
-  accessToken: string; // API real retorna accessToken, não token
+  accessToken: string; 
   expiresIn?: number;
   usuario: UsuarioResponseDTO;
   setupEmpresaPendente?: boolean;
@@ -239,6 +241,15 @@ export interface UtmRequestDTO {
   leadId: string;
 }
 
+// ✅ CORREÇÃO: Adicionado UtmUpdateDTO para resolver erro de build
+export interface UtmUpdateDTO {
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  term?: string;
+  content?: string;
+}
+
 // ==================== WEBHOOKS ====================
 export interface WebhookConfigResponseDTO {
   id: string;
@@ -288,6 +299,26 @@ export interface CampoCustomizadoRequestDTO {
 }
 
 export interface ValorCampoRequestDTO {
+  campoId: string;
+  entidadeId: string;
+  valor: string;
+}
+
+// ==================== COMPATIBILIDADE (Aliases) ====================
+export type CampoResponseDTO = CampoCustomizadoResponseDTO;
+export type CampoRequestDTO = CampoCustomizadoRequestDTO;
+export type StatusLeadResponseDTO = StatusFunilResponseDTO;
+export type StatusLeadRequestDTO = StatusFunilRequestDTO;
+
+export interface CampoPersonalizadoResponseDTO {
+  id: string;
+  campoId: string;
+  valor: string;
+  entidadeId: string;
+  campo?: CampoCustomizadoResponseDTO;
+}
+
+export interface CampoPersonalizadoRequestDTO {
   campoId: string;
   entidadeId: string;
   valor: string;
