@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { Mail, Lock, Loader2, ShieldCheck, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+
+// Importação blindada (relativa): O Next.js é obrigado a encontrar o arquivo aqui
+import logoOD from '../../../assets/logood.png'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,7 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   
   const [isLoaded, setIsLoaded] = useState(false)
-  
   const [loginSuccess, setLoginSuccess] = useState(false)
 
   useEffect(() => {
@@ -56,13 +57,11 @@ export default function LoginPage() {
         <div className="relative flex flex-col items-center">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-500/20 blur-2xl rounded-full" />
           
-          <Image 
-            src="/logood.png" 
+          {/* Usando a tag HTML padrão com o logo importado */}
+          <img 
+            src={logoOD.src} 
             alt="Origin Data" 
-            width={80}
-            height={80}
             className="w-20 h-20 object-contain mb-6 animate-pulse relative z-10"
-            priority
           />
           <div className="flex items-center gap-3 text-zinc-500 text-sm font-medium tracking-widest uppercase">
             <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
@@ -80,11 +79,9 @@ export default function LoginPage() {
         <div className="relative flex flex-col items-center">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-green-500/10 blur-[60px] rounded-full" />
           
-          <Image 
-            src="/logood.png" 
+          <img 
+            src={logoOD.src} 
             alt="Origin Data" 
-            width={96}
-            height={96}
             className="w-24 h-24 object-contain mb-8 animate-pulse relative z-10"
           />
           
@@ -129,15 +126,13 @@ export default function LoginPage() {
             <div className="p-8 sm:p-12 flex flex-col">
               
               <div className="mb-10 text-center flex flex-col items-center">
-                <Image 
-                  src="/logood.png" 
+                <img 
+                  src={logoOD.src} 
                   alt="Origin Data Logo" 
-                  width={64}
-                  height={64}
                   className="w-16 h-16 object-contain mb-6"
                 />
                 <h1 className="text-3xl font-semibold text-white mb-3 tracking-tight">
-                  Acesso Restrito
+                  ORIGIN DATA
                 </h1>
                 <p className="text-zinc-400 text-sm lg:text-base leading-relaxed max-w-sm">
                   Autentique-se com suas credenciais para acessar o painel de controle.
