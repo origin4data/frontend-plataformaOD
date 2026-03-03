@@ -1,164 +1,58 @@
 'use client'
 
-import { 
-  Users, 
-  Target, 
-  TrendingUp, 
-  DollarSign,
-  ArrowUpRight,
-  ArrowDownRight,
-  BarChart3,
-  Calendar
-} from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
+import { BarChart3, Calendar, Activity} from 'lucide-react'
+import Header from '@/components/dashboard/Header'
+import Perfil from '@/components/dashboard/Profile'
+import CardsEstatisticas from '@/components/dashboard/CardsEstatisticas'
+import AtividadesRecentes from '@/components/dashboard/AtividadesRecentes'
 
 export default function DashboardPage() {
-  const { user, setUserRole } = useAuth()
-
-  const stats = [
-    {
-      name: 'Total de Clientes',
-      value: '2,847',
-      change: '+12.5%',
-      changeType: 'positive',
-      icon: Users,
-    },
-    {
-      name: 'Leads Ativos',
-      value: '342',
-      change: '+8.2%',
-      changeType: 'positive',
-      icon: Target,
-    },
-    {
-      name: 'Taxa de Conversão',
-      value: '24.3%',
-      change: '-2.1%',
-      changeType: 'negative',
-      icon: TrendingUp,
-    },
-    {
-      name: 'Receita do Mês',
-      value: 'R$ 142.5k',
-      change: '+18.7%',
-      changeType: 'positive',
-      icon: DollarSign,
-    },
-  ]
-
-  const recentActivities = [
-    { id: 1, action: 'Novo cliente cadastrado', name: 'Maria Santos', time: '5 min atrás', type: 'client' },
-    { id: 2, action: 'Lead convertido', name: 'João Silva', time: '12 min atrás', type: 'lead' },
-    { id: 3, action: 'Processo finalizado', name: 'Processo #1234', time: '1 hora atrás', type: 'process' },
-    { id: 4, action: 'Novo lead capturado', name: 'Ana Costa', time: '2 horas atrás', type: 'lead' },
-    { id: 5, action: 'Cliente atualizado', name: 'Pedro Oliveira', time: '3 horas atrás', type: 'client' },
-  ]
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">
-            Bem-vindo, {user?.name} 👋
-          </h1>
-          <p className="text-neutral-400 mt-1">
-            Aqui está um resumo do que está acontecendo hoje
-          </p>
+    <div className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden text-zinc-100">
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="relative z-10 space-y-8 pb-8">
+        {/* HEADER AREA */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-zinc-800/50">
+          <Header />
+          {/* Seletor de Perfil (Visual Tecnológico) */}
+          <Perfil />
         </div>
-        
-        {/* Role Switcher (Demo purposes) */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-neutral-400">Simular perfil:</span>
-          <select
-            value={user?.role}
-            onChange={(e) => setUserRole(e.target.value as any)}
-            className="px-3 py-2 rounded-lg border border-neutral-700 bg-neutral-800 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="ADMIN">ADMIN</option>
-            <option value="OWNER">OWNER</option>
-            <option value="USER">USER</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.name}
-            className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 hover:border-neutral-700 transition-colors"
-          >
-            <div className="flex items-center justify-between">
+        {/* CARDS DE ESTATÍSTICAS */}
+        <CardsEstatisticas />
+        {/* SECÇÃO INFERIOR: GRÁFICO E ATIVIDADES */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Gráfico */}
+          <div className="lg:col-span-2 relative bg-zinc-950/40 border border-zinc-800/60 rounded-xl p-6 backdrop-blur-xl overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <stat.icon className="w-6 h-6 text-orange-500" />
+                <div className="p-2 rounded-md bg-zinc-900 border border-zinc-800">
+                  <Activity className="w-4 h-4 text-orange-500" />
                 </div>
+                <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Desempenho da Operação</h2>
               </div>
-              <div
-                className={`flex items-center gap-1 text-sm font-medium ${
-                  stat.changeType === 'positive' ? 'text-green-500' : 'text-red-500'
-                }`}
-              >
-                {stat.changeType === 'positive' ? (
-                  <ArrowUpRight className="w-4 h-4" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4" />
-                )}
-                {stat.change}
-              </div>
+              
+              <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-zinc-800 bg-zinc-900/50 text-zinc-400 text-xs font-mono hover:text-white hover:border-zinc-700 transition-colors">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>ÚLTIMOS 7 DIAS</span>
+              </button>
             </div>
-            <div className="mt-4">
-              <h3 className="text-3xl font-bold text-white">{stat.value}</h3>
-              <p className="text-sm text-neutral-400 mt-1">{stat.name}</p>
+            
+            <div className="flex-1 flex flex-col items-center justify-center min-h-[250px] border border-dashed border-zinc-800/80 rounded-lg relative z-10 bg-zinc-900/20">
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:16px_16px]" />
+              <BarChart3 className="w-12 h-12 text-zinc-700 mb-4" />
+              <p className="text-zinc-500 text-sm font-mono tracking-widest">A aguardar telemetria de dados...</p>
             </div>
           </div>
-        ))}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Chart */}
-        <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-white">Visão Geral de Vendas</h2>
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-700 text-neutral-300 text-sm hover:bg-neutral-800 transition-colors">
-              <Calendar className="w-4 h-4" />
-              Últimos 7 dias
-            </button>
-          </div>
-          <div className="h-64 flex items-center justify-center">
-            <BarChart3 className="w-16 h-16 text-neutral-700" />
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6">
-          <h2 className="text-lg font-semibold text-white mb-6">Atividade Recente</h2>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-start gap-4 pb-4 border-b border-neutral-800 last:border-0 last:pb-0"
-              >
-                <div
-                  className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.type === 'client'
-                      ? 'bg-blue-500'
-                      : activity.type === 'lead'
-                      ? 'bg-orange-500'
-                      : 'bg-green-500'
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white font-medium">{activity.action}</p>
-                  <p className="text-sm text-neutral-400 truncate">{activity.name}</p>
-                </div>
-                <span className="text-xs text-neutral-500 whitespace-nowrap">
-                  {activity.time}
-                </span>
-              </div>
-            ))}
-          </div>
+          {/* Atividade Recente */}
+          <AtividadesRecentes />
+          
         </div>
       </div>
     </div>
