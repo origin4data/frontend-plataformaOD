@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-// Variáveis de ambiente corrigidas para Next.js
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.origindata.com.br';
-export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK === 'true' || false;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -16,7 +14,10 @@ api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('authToken');
-      if (token) {
+      
+      // SÓ ENVIA O TOKEN se ele existir e NÃO começar com "mock-"
+      // Isso impede o erro "Another algorithm expected" no backend
+      if (token && !token.startsWith('mock-')) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
@@ -28,12 +29,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Evita redirecionamento infinito se o erro for na página de login
-    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
+    // Se o servidor der 401 em qualquer outra aba, limpamos o acesso local
+    if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
