@@ -23,7 +23,6 @@ export default function AtividadesRecentes() {
       <div className="space-y-6 flex-1">
         {recentActivities.map((activity, index) => (
           <div key={activity.id} className="relative flex items-start gap-4">
-            {/* Linha de conexão visual */}
             {index !== recentActivities.length - 1 && (
               <div className="absolute left-2 top-6 bottom-[-24px] w-px bg-zinc-800/80" />
             )}
