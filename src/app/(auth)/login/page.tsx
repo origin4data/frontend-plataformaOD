@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Mail, Lock, Loader2, ShieldCheck, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
-// Importação blindada (relativa): O Next.js é obrigado a encontrar o arquivo aqui
 import logoOD from '../../../assets/logood.png'
 
 export default function LoginPage() {
@@ -37,7 +36,30 @@ export default function LoginPage() {
       setLoginSuccess(true)
       
       setTimeout(() => {
-        router.push('/onboarding')
+        // --- INÍCIO DA VERIFICAÇÃO INTELIGENTE ---
+        // Lemos o usuário diretamente do localStorage (salvo pelo authService)
+        const userStr = localStorage.getItem('user')
+        let hasEmpresaMae = false
+
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr)
+            // Verifica se o objeto salvo tem a propriedade empresaMae e se ela tem um ID
+            if (user && user.empresaMae && user.empresaMae.id) {
+              hasEmpresaMae = true
+            }
+          } catch (parseError) {
+            console.error("Erro ao ler dados do usuário", parseError)
+          }
+        }
+
+        // Redireciona com base na verificação
+        if (hasEmpresaMae) {
+          router.push('/dashboard')
+        } else {
+          router.push('/onboarding')
+        }
+        // --- FIM DA VERIFICAÇÃO INTELIGENTE ---
       }, 2500)
 
     } catch (err: any) {
@@ -48,7 +70,6 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* 1. TELA DE CARREGAMENTO */}
       <div 
         className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-black transition-all duration-700 ease-in-out ${
           isLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'
@@ -57,7 +78,6 @@ export default function LoginPage() {
         <div className="relative flex flex-col items-center">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-500/20 blur-2xl rounded-full" />
           
-          {/* Usando a tag HTML padrão com o logo importado */}
           <img 
             src={logoOD.src} 
             alt="Origin Data" 
@@ -70,7 +90,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* 2. TELA DE SUCESSO */}
       <div 
         className={`fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black transition-opacity duration-500 ease-in-out ${
           loginSuccess ? 'opacity-100' : 'opacity-0 pointer-events-none'
