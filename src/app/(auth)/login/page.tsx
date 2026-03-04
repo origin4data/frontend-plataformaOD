@@ -36,7 +36,25 @@ export default function LoginPage() {
       setLoginSuccess(true)
       
       setTimeout(() => {
-        router.push('/onboarding')
+        // --- INÍCIO DA VERIFICAÇÃO INTELIGENTE ---
+        const userStr = localStorage.getItem('user')
+        let hasEmpresas = false
+
+        if (userStr) {
+          const user = JSON.parse(userStr)
+          // Verifica se o array de empresas existe e tem pelo menos 1 item
+          if (user.empresas && user.empresas.length > 0) {
+            hasEmpresas = true
+          }
+        }
+
+        // Redireciona com base no status do usuário
+        if (hasEmpresas) {
+          router.push('/dashboard')
+        } else {
+          router.push('/onboarding')
+        }
+        // --- FIM DA VERIFICAÇÃO INTELIGENTE ---
       }, 2500)
 
     } catch (err: any) {
