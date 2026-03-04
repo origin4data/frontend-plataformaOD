@@ -53,7 +53,8 @@ export default function OnboardingPage() {
     if (userStr) {
       try {
         const user = JSON.parse(userStr)
-        if (user.empresas && user.empresas.length > 0) {
+        // VERIFICAÇÃO CORRIGIDA: Look for empresaMae
+        if (user.empresaMae && user.empresaMae.id) {
           router.replace('/dashboard')
         }
       } catch (e) {
@@ -144,7 +145,13 @@ export default function OnboardingPage() {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
-      user.empresas = [{ id: empresaId, nome: empresaData.razaoSocial }];
+      // SALVA CORRETAMENTE O FORMATO ESPERADO: empresaMae
+      user.empresaMae = { 
+        id: empresaId, 
+        razaoSocial: empresaData.razaoSocial,
+        nomeFantasia: empresaData.nomeFantasia || empresaData.razaoSocial,
+        cnpj: empresaData.cnpj.replace(/\D/g, '')
+      };
       localStorage.setItem('user', JSON.stringify(user));
     }
 
