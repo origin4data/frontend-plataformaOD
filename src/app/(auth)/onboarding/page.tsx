@@ -1,29 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, UserCircle, Target, Check, ArrowRight, Loader2, AlertCircle, Search } from 'lucide-react'
+import { Building2, UserCircle, Check, ArrowRight, Loader2, AlertCircle, Search, Info } from 'lucide-react'
 import { api } from '@/services/api'
 
 const steps = [
   {
     id: 1,
     title: 'Informações da Empresa',
-    description: 'Configure os dados principais da sua organização',
+    description: 'Configure os dados principais da organização',
     icon: Building2,
   },
   {
     id: 2,
-    title: 'Dados do Cliente',
-    description: 'Crie o perfil do cliente vinculado à empresa',
+    title: 'Cliente e Segmentação',
+    description: 'Crie o perfil e defina o setor de atuação',
     icon: UserCircle,
-  },
-  {
-    id: 3,
-    title: 'Objetivos',
-    description: 'Defina suas metas principais',
-    icon: Target,
-  },
+  }
 ]
 
 export default function OnboardingPage() {
@@ -32,21 +26,41 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // IDs gerados durante o processo
   const [empresaId, setEmpresaId] = useState('')
 
+  // Dados da Etapa 1: Empresa
   const [empresaData, setEmpresaData] = useState({
     cnpj: '',
     razaoSocial: '',
     nomeFantasia: ''
   })
 
+  // Dados da Etapa 2: Cliente + Segmentação
   const [clienteData, setClienteData] = useState({
     nome: '',
     status: 'ATIVO',
     cep: '',
     numeroEndereco: '',
-    complementoEndereco: ''
+    complementoEndereco: '',
+    segmentoId: '', // Usado apenas para filtrar no Frontend
+    setoresIds: [] as number[] // Enviado para a API
   })
+
+  // Trava de Segurança: Impede acesso se já tiver empresa
+  useEffect(() => {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        if (user.empresas && user.empresas.length > 0) {
+          router.replace('/dashboard')
+        }
+      } catch (e) {
+        console.error("Erro ao ler dados do usuário", e)
+      }
+    }
+  }, [router])
 
   const handleNext = async () => {
     setError('')
@@ -75,20 +89,23 @@ export default function OnboardingPage() {
         setCurrentStep(2)
       } catch (err: any) {
         console.error('Erro ao criar empresa:', err)
-        setError(err.response?.data?.message || 'Ocorreu um erro ao registar a empresa. Verifique os dados.')
+        setError(err.response?.data?.message || 'Erro ao registrar empresa. Verifique os dados.')
       } finally {
         setLoading(false)
       }
       return
     }
 
-    // REGRAS DA ETAPA 2 (CRIAR CLIENTE)
+    // REGRAS DA ETAPA 2 (CRIAR CLIENTE COM SETORES)
     if (currentStep === 2) {
       if (!clienteData.nome) {
         setError('O Nome do cliente é obrigatório.')
         return
       }
-
+      if (clienteData.setoresIds.length === 0) {
+        setError('Por favor, selecione pelo menos um setor de atuação.')
+        return
+      }
       if (!empresaId) {
         setError('ID da empresa não encontrado. Volte ao passo anterior e tente novamente.')
         return
@@ -98,35 +115,39 @@ export default function OnboardingPage() {
       try {
         const cepLimpo = clienteData.cep.replace(/\D/g, '')
 
+        // Envia o cliente já com a lista de setores escolhida
         await api.post('/api/clientes', {
           nome: clienteData.nome,
           empresaId: empresaId,
           status: clienteData.status,
           cep: cepLimpo,
           numeroEndereco: clienteData.numeroEndereco,
-          complementoEndereco: clienteData.complementoEndereco
+          complementoEndereco: clienteData.complementoEndereco,
+          setoresIds: clienteData.setoresIds 
         })
 
-        setCurrentStep(3)
+        // Finaliza o onboarding
+        handleFinish()
       } catch (err: any) {
         console.error('Erro ao criar cliente:', err)
-        setError(err.response?.data?.message || 'Ocorreu um erro ao registar o cliente.')
-      } finally {
-        setLoading(false)
+        setError(err.response?.data?.message || 'Erro ao registrar cliente e setores. Verifique o servidor.')
+        setLoading(false) // Retira o loading caso dê erro para ele poder tentar de novo
       }
       return
-    }
-
-    // FINALIZAR
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1)
-    } else {
-      handleFinish()
     }
   }
 
   const handleFinish = async () => {
     setLoading(true)
+    
+    // Atualiza o localStorage localmente para ele não cair no Onboarding de novo
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      user.empresas = [{ id: empresaId, nome: empresaData.razaoSocial }];
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+
     await new Promise(resolve => setTimeout(resolve, 1000))
     router.push('/dashboard')
   }
@@ -142,8 +163,8 @@ export default function OnboardingPage() {
           <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
             <span className="text-xl font-black text-black">OD</span>
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">Bem-vindo à Origin!</h1>
-          <p className="text-zinc-400 text-sm">Configure a sua conta corporativa em poucos passos.</p>
+          <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">Origin Data</h1>
+          <p className="text-zinc-400 text-sm">Configure a sua conta corporativa em passos simples.</p>
         </div>
 
         <div className="space-y-6 relative z-10">
@@ -181,14 +202,10 @@ export default function OnboardingPage() {
             )
           })}
         </div>
-        
-        <div className="mt-auto relative z-10">
-          <p className="text-xs text-zinc-600 font-mono">OD SYSTEM v2.0</p>
-        </div>
       </div>
 
       {/* ÁREA DE CONTEÚDO PRINCIPAL */}
-      <div className="flex-1 p-8 sm:p-12 lg:p-20 overflow-y-auto relative">
+      <div className="flex-1 p-8 sm:p-12 lg:p-20 overflow-y-auto relative text-zinc-300">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
         <div className="max-w-2xl mx-auto relative z-10">
@@ -219,16 +236,15 @@ export default function OnboardingPage() {
                 onChange={(newData) => setClienteData(prev => ({...prev, ...newData}))}
               />
             )}
-            {currentStep === 3 && <Step3Content />}
           </div>
 
           <div className="flex justify-between items-center pt-6 border-t border-zinc-800/50">
             <button
               onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
               disabled={currentStep === 1 || loading}
-              className="px-6 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors disabled:opacity-0"
+              className="px-6 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:text-white transition-colors disabled:opacity-0"
             >
-              Voltar passo
+              Voltar
             </button>
             <button
               onClick={handleNext}
@@ -246,31 +262,25 @@ export default function OnboardingPage() {
   )
 }
 
+// ==============================================
+// ETAPA 1: EMPRESA
+// ==============================================
 function Step1Content({ data, onChange }: { data: any, onChange: (d: any) => void }) {
   const [loadingCnpj, setLoadingCnpj] = useState(false)
-  
-  // Transformei cnpjError num booleano de "Não Encontrado" em vez de mensagem de erro fixada
   const [cnpjNotFound, setCnpjNotFound] = useState(false)
 
   const buscarDadosCnpj = async (cnpjLimpo: string) => {
     setLoadingCnpj(true)
     setCnpjNotFound(false)
-    
     try {
       const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`)
-      
-      if (!response.ok) {
-        throw new Error('CNPJ não encontrado')
-      }
-      
+      if (!response.ok) throw new Error()
       const cnpjData = await response.json()
-      
       onChange({
         razaoSocial: cnpjData.razao_social || '',
         nomeFantasia: cnpjData.nome_fantasia || cnpjData.razao_social || ''
       })
-    } catch (error) {
-      // Se não achar, ativa o aviso visual, mas permite que o utilizador preencha manualmente
+    } catch {
       setCnpjNotFound(true)
     } finally {
       setLoadingCnpj(false)
@@ -278,73 +288,56 @@ function Step1Content({ data, onChange }: { data: any, onChange: (d: any) => voi
   }
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Esconde o aviso se o utilizador voltar a apagar ou digitar números
-    setCnpjNotFound(false) 
-
-    let value = e.target.value.replace(/\D/g, '') 
+    setCnpjNotFound(false)
+    let value = e.target.value.replace(/\D/g, '')
+    if (value.length > 14) value = value.slice(0, 14)
+    if (value.length === 14) buscarDadosCnpj(value)
     
-    if (value.length > 14) value = value.slice(0, 14) 
-    
-    if (value.length === 14) {
-      buscarDadosCnpj(value)
-    }
-
-    let maskedValue = value
-    maskedValue = maskedValue.replace(/^(\d{2})(\d)/, '$1.$2')
-    maskedValue = maskedValue.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    maskedValue = maskedValue.replace(/\.(\d{3})(\d)/, '.$1/$2')
-    maskedValue = maskedValue.replace(/(\d{4})(\d)/, '$1-$2')
-
-    onChange({ cnpj: maskedValue })
+    const masked = value
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+    onChange({ cnpj: masked })
   }
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex justify-between">
+        <label className="text-xs font-semibold text-zinc-500 flex justify-between uppercase tracking-wider">
           <span>CNPJ da Empresa</span>
-          {loadingCnpj && <span className="text-orange-500 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> A buscar dados...</span>}
-          {cnpjNotFound && <span className="text-yellow-500">Não encontrado. Pode preencher manualmente.</span>}
+          {cnpjNotFound && <span className="text-yellow-500 text-[10px]">Não encontrado. Preencha manualmente.</span>}
         </label>
         <div className="relative group">
           <input
             type="text"
             value={data.cnpj}
             onChange={handleCnpjChange}
-            // Se não for encontrado, a borda fica amarelinha em vez de vermelho sangue
-            className={`w-full px-5 py-4 rounded-xl bg-zinc-950 border ${cnpjNotFound ? 'border-yellow-500/50 focus:border-yellow-500 focus:ring-yellow-500/50' : 'border-zinc-800 focus:border-orange-500/50 focus:ring-orange-500/50'} text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 transition-all font-mono`}
+            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white font-mono focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 outline-none transition-all"
             placeholder="00.000.000/0000-00"
           />
-          <Search className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${loadingCnpj ? 'text-orange-500 animate-pulse' : 'text-zinc-600'}`} />
+          <Search className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 ${loadingCnpj ? 'text-orange-500 animate-spin' : 'text-zinc-600'}`} />
         </div>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Razão Social <span className="text-orange-500">*</span>
-          </label>
+          <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Razão Social *</label>
           <input
             type="text"
             value={data.razaoSocial}
             onChange={(e) => onChange({ razaoSocial: e.target.value })}
-            className={`w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all ${loadingCnpj ? 'opacity-50' : ''}`}
-            placeholder="Ex: Origin Data LTDA"
-            readOnly={loadingCnpj}
+            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 outline-none transition-all"
+            placeholder="Razão Social"
           />
         </div>
-        
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Nome Fantasia <span className="text-zinc-700">(Opcional)</span>
-          </label>
+          <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Nome Fantasia</label>
           <input
             type="text"
             value={data.nomeFantasia}
             onChange={(e) => onChange({ nomeFantasia: e.target.value })}
-            className={`w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all ${loadingCnpj ? 'opacity-50' : ''}`}
-            placeholder="Ex: Origin Platform"
-            readOnly={loadingCnpj}
+            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 outline-none transition-all"
+            placeholder="Nome Fantasia"
           />
         </div>
       </div>
@@ -352,116 +345,162 @@ function Step1Content({ data, onChange }: { data: any, onChange: (d: any) => voi
   )
 }
 
+// ==============================================
+// ETAPA 2: CLIENTE E SEGMENTAÇÃO
+// ==============================================
 function Step2Content({ data, onChange }: { data: any, onChange: (d: any) => void }) {
+  const [segmentos, setSegmentos] = useState<any[]>([])
+  const [todosSetores, setTodosSetores] = useState<any[]>([])
+  const [loadingDados, setLoadingDados] = useState(true)
+
+  // Busca os Segmentos e Setores da sua API assim que a etapa 2 abrir
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        const [resSeg, resSet] = await Promise.all([
+          api.get('/api/segmentos'),
+          api.get('/api/setores')
+        ])
+        setSegmentos(resSeg.data)
+        setTodosSetores(resSet.data)
+      } catch (err) {
+        console.error("Erro ao buscar segmentos e setores:", err)
+      } finally {
+        setLoadingDados(false)
+      }
+    }
+    carregarDados()
+  }, [])
+
+  // Formatação de CEP
   const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '')
     if (value.length > 8) value = value.slice(0, 8)
-    
-    if (value.length > 5) {
-      value = value.replace(/^(\d{5})(\d)/, '$1-$2')
-    }
+    if (value.length > 5) value = value.replace(/^(\d{5})(\d)/, '$1-$2')
     onChange({ cep: value })
   }
 
+  // Lógica quando escolhe um Segmento (limpa os setores anteriores)
+  const handleSegmentoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange({ segmentoId: e.target.value, setoresIds: [] })
+  }
+
+  // Lógica de marcar/desmarcar Setores
+  const toggleSetor = (setorId: number) => {
+    const isSelected = data.setoresIds.includes(setorId)
+    if (isSelected) {
+      onChange({ setoresIds: data.setoresIds.filter((id: number) => id !== setorId) })
+    } else {
+      onChange({ setoresIds: [...data.setoresIds, setorId] })
+    }
+  }
+
+  // Filtra os setores para exibir na tela APENAS os do segmento escolhido
+  const setoresDisponiveis = todosSetores.filter((s: any) => s.segmento?.id?.toString() === data.segmentoId?.toString())
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Nome do Cliente <span className="text-orange-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={data.nome}
-            onChange={(e) => onChange({ nome: e.target.value })}
-            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-            placeholder="Nome do cliente ou parceiro"
-          />
+    <div className="space-y-8">
+      
+      {/* BLOCO 1: DADOS DO CLIENTE */}
+      <div className="space-y-6">
+        <h4 className="text-sm font-semibold text-white border-b border-zinc-800 pb-2">1. Dados Principais</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Nome do Cliente *</label>
+            <input
+              type="text"
+              value={data.nome}
+              onChange={(e) => onChange({ nome: e.target.value })}
+              className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-orange-500/50 outline-none transition-all"
+              placeholder="Nome Completo / Filial"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</label>
+            <select
+              value={data.status}
+              onChange={(e) => onChange({ status: e.target.value })}
+              className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-orange-500/50 outline-none transition-all appearance-none"
+            >
+              <option value="ATIVO">Ativo</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="INATIVO">Inativo</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">CEP</label>
+            <input type="text" value={data.cep} onChange={handleCepChange} className="w-full px-5 py-4 bg-zinc-950 border border-zinc-800 text-white font-mono rounded-xl focus:border-orange-500/50 outline-none" placeholder="00000-000" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Número</label>
+            <input type="text" value={data.numeroEndereco} onChange={(e) => onChange({ numeroEndereco: e.target.value })} className="w-full px-5 py-4 bg-zinc-950 border border-zinc-800 text-white rounded-xl focus:border-orange-500/50 outline-none" placeholder="123" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Complemento</label>
+            <input type="text" value={data.complementoEndereco} onChange={(e) => onChange({ complementoEndereco: e.target.value })} className="w-full px-5 py-4 bg-zinc-950 border border-zinc-800 text-white rounded-xl focus:border-orange-500/50 outline-none" placeholder="Sala 1" />
+          </div>
+        </div>
+      </div>
+
+      {/* BLOCO 2: SEGMENTAÇÃO (Puxado do Banco) */}
+      <div className="space-y-6 pt-4">
+        <h4 className="text-sm font-semibold text-white border-b border-zinc-800 pb-2">2. Segmentação de Mercado</h4>
+
+        {/* ALERTA DE BOA PRÁTICA */}
+        <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl flex gap-3 text-orange-200">
+          <Info className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+          <p className="text-sm leading-relaxed">
+            <strong>Dica:</strong> Você pode criar um Cliente para cada Setor para evitar confusões de atendimento no CRM, 
+            ou manter setores diferentes dentro deste mesmo Cliente (a organização dependerá das UTMs).
+          </p>
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Status Inicial
-          </label>
-          <select
-            value={data.status}
-            onChange={(e) => onChange({ status: e.target.value })}
-            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all appearance-none"
+          <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Qual o Segmento?</label>
+          <select 
+            value={data.segmentoId} 
+            onChange={handleSegmentoChange}
+            disabled={loadingDados}
+            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-orange-500/50 outline-none appearance-none"
           >
-            <option value="ATIVO">Ativo</option>
-            <option value="PENDENTE">Pendente</option>
-            <option value="INATIVO">Inativo</option>
-            <option value="SUSPENSO">Suspenso</option>
-            <option value="CANCELADO">Cancelado</option>
+            <option value="">{loadingDados ? 'Carregando banco de dados...' : 'Selecione um segmento...'}</option>
+            {segmentos.map(seg => (
+              <option key={seg.id} value={seg.id}>{seg.nome}</option>
+            ))}
           </select>
         </div>
-      </div>
 
-      <div className="pt-4 border-t border-zinc-800/50">
-        <h4 className="text-sm font-medium text-white mb-4">Endereço do Cliente</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="space-y-2 sm:col-span-1">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              CEP
-            </label>
-            <input
-              type="text"
-              value={data.cep}
-              onChange={handleCepChange}
-              className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all font-mono"
-              placeholder="00000-000"
-            />
+        {data.segmentoId && (
+          <div className="space-y-3 pt-2">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Selecione os Setores (Pode escolher mais de um) *</label>
+            {setoresDisponiveis.length === 0 ? (
+              <p className="text-zinc-500 text-sm py-2">Nenhum setor cadastrado para este segmento.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {setoresDisponiveis.map(setor => (
+                  <label 
+                    key={setor.id} 
+                    className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${data.setoresIds.includes(setor.id) ? 'bg-zinc-900 border-orange-500' : 'bg-zinc-950/50 border-zinc-800 hover:bg-zinc-900'}`}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={data.setoresIds.includes(setor.id)}
+                      onChange={() => toggleSetor(setor.id)}
+                      className="w-5 h-5 mt-0.5 rounded border-zinc-700 bg-zinc-900 text-orange-500 focus:ring-orange-500/50" 
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-white">{setor.nome}</p>
+                      {setor.descricao && <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">{setor.descricao}</p>}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
-
-          <div className="space-y-2 sm:col-span-1">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Número
-            </label>
-            <input
-              type="text"
-              value={data.numeroEndereco}
-              onChange={(e) => onChange({ numeroEndereco: e.target.value })}
-              className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-              placeholder="Ex: 123"
-            />
-          </div>
-
-          <div className="space-y-2 sm:col-span-1">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Complemento
-            </label>
-            <input
-              type="text"
-              value={data.complementoEndereco}
-              onChange={(e) => onChange({ complementoEndereco: e.target.value })}
-              className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-              placeholder="Ex: Sala 2"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Step3Content() {
-  const objetivos = ['Gestão de Clientes', 'CRM e Vendas', 'Controlo de Processos', 'Gestão de Equipa']
-  
-  return (
-    <div className="space-y-4">
-      <p className="text-zinc-400 mb-6 text-sm leading-relaxed">
-        Selecione os principais objetivos para personalizar a sua experiência inicial na plataforma.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {objetivos.map((goal) => (
-          <label key={goal} className="flex items-center gap-4 p-5 rounded-xl border border-zinc-800 bg-zinc-950/50 hover:bg-zinc-900 hover:border-zinc-700 cursor-pointer transition-all group">
-            <input 
-              type="checkbox" 
-              className="w-5 h-5 rounded border-zinc-700 bg-zinc-900 text-orange-500 focus:ring-orange-500/50 focus:ring-offset-0 focus:ring-1" 
-            />
-            <span className="text-zinc-300 text-sm font-medium group-hover:text-white transition-colors">{goal}</span>
-          </label>
-        ))}
+        )}
       </div>
     </div>
   )
