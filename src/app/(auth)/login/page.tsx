@@ -31,7 +31,6 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Fazemos o login sem tentar salvar o retorno na variável "data"
       await login(email, password)
       
       setLoginSuccess(true)
