@@ -34,14 +34,19 @@ describe('OnboardingPage', () => {
     window.localStorage.clear();
   });
 
-  it('deve redirecionar para o dashboard caso o usuário já possua empresaMae (Trava de Segurança)', () => {
+  it('deve pular direto para a Etapa 2 caso o usuário já possua empresaMae registrada', async () => {
     window.localStorage.setItem('user', JSON.stringify({
-      empresaMae: { id: 'empresa-123' }
+      empresaMae: { id: 'empresa-123', razaoSocial: 'Empresa Teste' }
     }));
+
+    // Mock da API para não quebrar a montagem da Etapa 2
+    (api.get as jest.Mock).mockResolvedValue({ data: [] });
 
     render(<OnboardingPage />);
 
-    expect(mockReplace).toHaveBeenCalledWith('/dashboard');
+    // Verifica se a Etapa 2 foi carregada automaticamente
+    const tituloEtapa2 = await screen.findByRole('heading', { level: 2, name: /Cliente e Segmentação/i });
+    expect(tituloEtapa2).toBeInTheDocument();
   });
 
   it('deve exibir erro na Etapa 1 se tentar avançar sem preencher CNPJ e Razão Social', async () => {
@@ -98,7 +103,7 @@ describe('OnboardingPage', () => {
     // Preenche dados do Cliente
     fireEvent.change(screen.getByPlaceholderText('Nome Completo / Filial'), { target: { value: 'Filial Centro' } });
     
-    // Buscamos diretamente pelo texto da Option padrão, que é infalível
+    // Buscamos diretamente pelo texto da Option padrão
     const selectSegmento = screen.getByDisplayValue('Selecione um segmento...');
     fireEvent.change(selectSegmento, { target: { value: '4' } });
 
