@@ -12,6 +12,16 @@ export function Step2Client({ data, onChange }: Step2Props) {
   const [todosSetores, setTodosSetores] = useState<any[]>([])
   const [loadingDados, setLoadingDados] = useState(true)
 
+  // Função para transformar "texto exemplo" em "Texto Exemplo"
+  const formatText = (text: string) => {
+    if (!text) return ""
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
   useEffect(() => {
     const carregarDados = async () => {
       try {
@@ -57,7 +67,6 @@ export function Step2Client({ data, onChange }: Step2Props) {
       <div className="space-y-6">
         <h4 className="text-sm font-semibold text-white border-b border-zinc-800 pb-2">1. Dados Principais</h4>
         
-        {/* Campo de Nome do Cliente ocupando toda a largura agora que o Status saiu */}
         <div className="space-y-2">
           <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Nome do Cliente *</label>
           <input
@@ -91,8 +100,7 @@ export function Step2Client({ data, onChange }: Step2Props) {
         <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl flex gap-3 text-orange-200">
           <Info className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
           <p className="text-sm leading-relaxed">
-            <strong>Dica:</strong> Você pode criar um Cliente para cada Setor para evitar confusões de atendimento no CRM, 
-            ou manter setores diferentes dentro deste mesmo Cliente (a organização dependerá das UTMs).
+            <strong>Dica:</strong> Você pode criar um Cliente para cada Setor para evitar confusões de atendimento no CRM.
           </p>
         </div>
 
@@ -102,18 +110,20 @@ export function Step2Client({ data, onChange }: Step2Props) {
             value={data.segmentoId} 
             onChange={handleSegmentoChange}
             disabled={loadingDados}
-            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-orange-500/50 outline-none appearance-none capitalize"
+            className="w-full px-5 py-4 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-orange-500/50 outline-none appearance-none"
           >
             <option value="">{loadingDados ? 'Carregando banco de dados...' : 'Selecione um segmento...'}</option>
             {segmentos.map(seg => (
-              <option key={seg.id} value={seg.id}>{seg.nome}</option>
+              <option key={seg.id} value={seg.id}>
+                {formatText(seg.nome)} {/* APLICADO AQUI */}
+              </option>
             ))}
           </select>
         </div>
 
         {data.segmentoId && (
           <div className="space-y-3 pt-2">
-            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Selecione os Setores (Pode escolher mais de um) *</label>
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Selecione os Setores *</label>
             {setoresDisponiveis.length === 0 ? (
               <p className="text-zinc-500 text-sm py-2">Nenhum setor cadastrado para este segmento.</p>
             ) : (
@@ -130,8 +140,14 @@ export function Step2Client({ data, onChange }: Step2Props) {
                       className="w-5 h-5 mt-0.5 rounded border-zinc-700 bg-zinc-900 text-orange-500 focus:ring-orange-500/50" 
                     />
                     <div>
-                      <p className="text-sm font-medium text-white capitalize">{setor.nome}</p>
-                      {setor.descricao && <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5 capitalize">{setor.descricao}</p>}
+                      <p className="text-sm font-medium text-white">
+                        {formatText(setor.nome)} {/* APLICADO AQUI */}
+                      </p>
+                      {setor.descricao && (
+                        <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">
+                          {formatText(setor.descricao)} {/* APLICADO AQUI */}
+                        </p>
+                      )}
                     </div>
                   </label>
                 ))}
