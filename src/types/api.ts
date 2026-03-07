@@ -323,3 +323,16 @@ export interface CampoPersonalizadoRequestDTO {
   entidadeId: string;
   valor: string;
 }
+
+export interface SegmentoResponseDTO {
+  descricao: any;
+  id: number;
+  nome: string;
+}
+
+export interface SetorResponseDTO {
+  id: number;
+  nome: string;
+  descricao?: string;
+  segmento?: SegmentoResponseDTO;
+}
